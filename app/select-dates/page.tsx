@@ -2,8 +2,8 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "../api/auth/[...nextauth]/route";
-import DateSelectionForm from "../components/DeleteSelectionForm"; 
-import LogoutButton from "../components/LogoutButton"; 
+import DateSelectionForm from "../components/DeleteSelectionForm";
+import NavigationHeader from "../components/NavigationHeader";
 import prisma from "@/lib/prisma";
 
 export default async function SelectDates() {
@@ -13,7 +13,6 @@ export default async function SelectDates() {
     redirect("/");
   }
 
-  // ユーザーのデータを取得
   const user = await prisma.user.findUnique({
     where: { email: session.user.email! },
     select: {
@@ -29,19 +28,11 @@ export default async function SelectDates() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <p className="text-sm text-gray-600">ログイン中：</p>
-            <p className="font-medium">{user.name}</p>
-          </div>
-          <LogoutButton />
-        </div>
-      </header>
+      <NavigationHeader userName={user.name || "名無しさん"} />
 
       <main className="max-w-4xl mx-auto p-8">
         <div className="bg-white rounded-lg shadow p-6">
-          <h1 className="text-2xl font-bold mb-8">日付選択</h1>
+          <h1 className="text-2xl font-bold mb-8">マイ日付</h1>
           
           <div className="mb-8">
             <h2 className="text-lg font-medium mb-4">保存済みの日付</h2>
