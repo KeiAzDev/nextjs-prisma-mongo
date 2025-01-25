@@ -1,34 +1,33 @@
-import { getServerSession } from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
-import { getAuthOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
-
-interface Params {
-  dateId: string;
-  [Symbol.toStringTag]: string;
-}
-
-interface Context extends Promise<void> {
-  params: Params;
-}
+import { NextRequest } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { getAuthOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
 
 export async function DELETE(
   request: NextRequest,
-  context: Context
+  { params }: { params: Promise<{ dateId: string }> } // params を Promise として定義
 ) {
-  const session = await getServerSession(getAuthOptions());
-  
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    const { dateId } = await params; // params を await で解決
+
+    if (!dateId) {
+      return new Response(JSON.stringify({ error: 'Missing dateId' }), { status: 400 });
+    }
+
+    const session = await getServerSession(getAuthOptions());
+    if (!session?.user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+
     await prisma.userDate.delete({
-      where: { id: context.params.dateId }
+      where: {
+        id: dateId,
+      },
     });
-    return NextResponse.json({ success: true });
+
+    return new Response(JSON.stringify({ success: true }), { status: 200 });
   } catch (err) {
-    console.error("Error:", err);
-    return NextResponse.json({ error: "Failed to delete date" }, { status: 500 });
+    console.error('Error:', err);
+    return new Response(JSON.stringify({ error: 'Failed to delete date entry' }), { status: 500 });
   }
 }
