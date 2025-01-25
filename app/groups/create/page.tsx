@@ -1,12 +1,12 @@
 // app/groups/create/page.tsx
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getAuthOptions } from "@/lib/auth";
 import GroupCreateForm from "@/app/components/GroupCreateForm";
 import NavigationHeader from "@/app/components/NavigationHeader";
 
 export default async function CreateGroupPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(getAuthOptions());
   
   if (!session?.user) {
     redirect("/");

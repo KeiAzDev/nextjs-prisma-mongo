@@ -1,14 +1,14 @@
 // app/groups/page.tsx
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getAuthOptions } from "@/lib/auth"; 
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import GroupJoinForm from "@/app/components/GroupJoinForm";
 import NavigationHeader from "@/app/components/NavigationHeader";
 
 export default async function GroupsPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(getAuthOptions());
   
   if (!session?.user) {
     redirect("/");
@@ -37,6 +37,9 @@ export default async function GroupsPage() {
         }
       },
       memberships: {
+        where: {  // ここでメンバーシップもフィルタリング
+          userId: session.user.id
+        },
         include: {
           user: {
             select: {

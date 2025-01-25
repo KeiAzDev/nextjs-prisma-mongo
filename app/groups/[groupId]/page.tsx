@@ -1,26 +1,31 @@
 // app/groups/[groupId]/page.tsx
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "../../api/auth/[...nextauth]/route";
+import { getAuthOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import NavigationHeader from "@/app/components/NavigationHeader";
 import DeleteGroupButton from "@/app/components/DeleteGroupButton";
 
+interface GroupDetailPageProps {
+  params: {
+    groupId: string;
+  };
+}
+
 export default async function GroupDetailPage({
   params,
-}: {
-  params: { groupId: string };
-}) {
-  const session = await getServerSession(authOptions);
+}: GroupDetailPageProps) {
+  const session = await getServerSession(getAuthOptions());
 
   if (!session?.user) {
     redirect("/");
   }
 
-  // グループとメンバー情報を取得
   const group = await prisma.group.findUnique({
-    where: { id: params.groupId },
+    where: {
+      id: params.groupId,
+    },
     include: {
       owner: true,
       memberships: {
@@ -38,22 +43,17 @@ export default async function GroupDetailPage({
     },
   });
 
-  if (!group) {
-    redirect("/groups");
-  }
-
   // 現在のユーザーがメンバーかチェック
-  const isMember = group.memberships.some(
-    (membership) => membership.user.email === session.user.email
+  const isMember = group?.memberships.some(
+    (membership) => membership.user.id === session.user.id
   );
 
-  if (!isMember) {
+  if (!group || !isMember) {
     redirect("/groups");
   }
 
   const isOwner = group.owner.email === session.user.email;
 
-  // メンバーの日付をまとめる
   const memberDates = group.memberships.map((membership) => ({
     userId: membership.user.id,
     userName: membership.user.name || "名無し",
