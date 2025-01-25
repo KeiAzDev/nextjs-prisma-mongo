@@ -1,12 +1,11 @@
-// app/api/groups/join/route.ts
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { getAuthOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  
+  const session = await getServerSession(getAuthOptions());
+
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -15,7 +14,7 @@ export async function POST(request: Request) {
     const { inviteCode } = await request.json();
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+      where: { email: session.user.email },
     });
 
     if (!user) {
@@ -23,7 +22,7 @@ export async function POST(request: Request) {
     }
 
     const group = await prisma.group.findUnique({
-      where: { inviteCode }
+      where: { inviteCode },
     });
 
     if (!group) {
@@ -33,12 +32,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // 既にメンバーかチェック
     const existingMembership = await prisma.groupMembership.findFirst({
       where: {
         userId: user.id,
-        groupId: group.id
-      }
+        groupId: group.id,
+      },
     });
 
     if (existingMembership) {
@@ -51,8 +49,8 @@ export async function POST(request: Request) {
     const membership = await prisma.groupMembership.create({
       data: {
         userId: user.id,
-        groupId: group.id
-      }
+        groupId: group.id,
+      },
     });
 
     return NextResponse.json(membership);

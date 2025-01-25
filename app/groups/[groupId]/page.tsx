@@ -94,7 +94,7 @@ export default async function GroupDetailPage(props: PageProps) {
           </div>
 
           <div className="border-t pt-6 mt-6">
-            <h2 className="text-lg font-semibold mb-4">グループの日付</h2>
+            <h2 className="text-lg font-semibold mb-4">各個人の希望日</h2>
             {memberDates.some((member) => member.dates.length > 0) ? (
               <div className="space-y-4">
                 {memberDates.map((member) => (
