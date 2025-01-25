@@ -9,7 +9,7 @@ import DeleteGroupButton from "@/app/components/DeleteGroupButton";
 
 type PageProps = {
   params: Promise<{ groupId: string }>;
-}
+};
 
 export default async function GroupDetailPage(props: PageProps) {
   const { groupId } = await props.params;
@@ -36,7 +36,6 @@ export default async function GroupDetailPage(props: PageProps) {
     },
   });
 
-  // 現在のユーザーがメンバーかチェック
   const isMember = group?.memberships.some(
     (membership) => membership.user.id === session.user.id
   );
@@ -105,18 +104,28 @@ export default async function GroupDetailPage(props: PageProps) {
                     {member.dates.length > 0 ? (
                       <div className="grid gap-2">
                         {member.dates
-                          .sort((a, b) => a.getTime() - b.getTime())
-                          .map((date, index) => (
+                          .sort(
+                            (a, b) =>
+                              new Date(a.date).getTime() -
+                              new Date(b.date).getTime()
+                          )
+                          .map((date) => (
                             <div
-                              key={index}
-                              className="bg-white p-2 rounded border"
+                              key={date.id}
+                              className="bg-white p-2 rounded border flex justify-between"
                             >
-                              {new Date(date).toLocaleDateString("ja-JP", {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                                weekday: "long",
-                              })}
+                              <span>
+                                {new Date(date.date).toLocaleDateString(
+                                  "ja-JP",
+                                  {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                    weekday: "long",
+                                  }
+                                )}
+                              </span>
+                              <span className="text-gray-600">{date.memo}</span>
                             </div>
                           ))}
                       </div>
