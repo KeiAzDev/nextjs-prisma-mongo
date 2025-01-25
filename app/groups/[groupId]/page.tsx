@@ -7,25 +7,18 @@ import Link from "next/link";
 import NavigationHeader from "@/app/components/NavigationHeader";
 import DeleteGroupButton from "@/app/components/DeleteGroupButton";
 
-interface GroupDetailPageProps {
-  params: {
-    groupId: string;
-  };
+type PageProps = {
+  params: Promise<{ groupId: string }>;
 }
 
-export default async function GroupDetailPage({
-  params,
-}: GroupDetailPageProps) {
+export default async function GroupDetailPage(props: PageProps) {
+  const { groupId } = await props.params;
   const session = await getServerSession(getAuthOptions());
 
-  if (!session?.user) {
-    redirect("/");
-  }
+  if (!session?.user) redirect("/");
 
   const group = await prisma.group.findUnique({
-    where: {
-      id: params.groupId,
-    },
+    where: { id: groupId },
     include: {
       owner: true,
       memberships: {

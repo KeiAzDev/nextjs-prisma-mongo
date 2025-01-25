@@ -1,31 +1,26 @@
 // app/api/groups/[groupId]/route.ts
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { getAuthOptions } from "@/lib/auth";
+import { getServerSession } from "next-auth";
 import prisma from "@/lib/prisma";
+import { getAuthOptions } from "@/lib/auth";
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { groupId: string } }
-) {
+export async function DELETE(req: Request) {
   const session = await getServerSession(getAuthOptions());
-  
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    // グループを取得して作成者かチェック
+    // URLからgroupIdを取得
+    const groupId = req.url.split("/groups/")[1];
+
     const group = await prisma.group.findUnique({
-      where: { id: params.groupId },
-      include: { owner: true }
+      where: { id: groupId },
+      include: { owner: true },
     });
 
     if (!group) {
-      return NextResponse.json(
-        { error: "Group not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Group not found" }, { status: 404 });
     }
 
     if (group.owner.email !== session.user.email) {
@@ -35,16 +30,15 @@ export async function DELETE(
       );
     }
 
-    // グループを削除
     await prisma.group.delete({
-      where: { id: params.groupId }
+      where: { id: groupId },
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: Error | unknown) {
     console.error("Error deleting group:", error);
     return NextResponse.json(
-      { error: "Failed to delete group" },
+      { error: error instanceof Error ? error.message : "An error occurred" },
       { status: 500 }
     );
   }
