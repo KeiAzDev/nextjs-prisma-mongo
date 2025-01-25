@@ -3,18 +3,15 @@ import { getServerSession } from "next-auth";
 import { getAuthOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
-type Params = { groupId: string; memberId: string };
-
-export async function DELETE(
-  request: NextRequest,
-  context: { params: Promise<Params> }
-) {
+export async function DELETE(request: NextRequest) {
   try {
-    const { groupId, memberId } = await context.params; // 非同期に `params` を取得
+    const segments = request.nextUrl.pathname.split("/");
+    const groupId = segments[3];
+    const memberId = segments[5];
 
     if (!groupId || !memberId) {
       return NextResponse.json(
-        { error: "Invalid groupId or memberId" },
+        { error: "Invalid parameters" },
         { status: 400 }
       );
     }

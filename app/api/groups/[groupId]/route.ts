@@ -1,18 +1,21 @@
-// app/api/groups/[groupId]/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import prisma from "@/lib/prisma";
 import { getAuthOptions } from "@/lib/auth";
 
-export async function DELETE(req: Request) {
+export async function DELETE(request: NextRequest) {
   const session = await getServerSession(getAuthOptions());
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    // URLからgroupIdを取得
-    const groupId = req.url.split("/groups/")[1];
+    const segments = request.nextUrl.pathname.split("/");
+    const groupId = segments[segments.length - 1];
+
+    if (!groupId) {
+      return NextResponse.json({ error: "Invalid group ID" }, { status: 400 });
+    }
 
     const group = await prisma.group.findUnique({
       where: { id: groupId },
@@ -35,7 +38,7 @@ export async function DELETE(req: Request) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error: Error | unknown) {
+  } catch (error) {
     console.error("Error deleting group:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "An error occurred" },
