@@ -1,12 +1,20 @@
-// app/api/dates/[dateId]/route.ts
 import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getAuthOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
+interface Params {
+  dateId: string;
+  [Symbol.toStringTag]: string;
+}
+
+interface Context extends Promise<void> {
+  params: Params;
+}
+
 export async function DELETE(
-  request: Request,
-  { params }: { params: { dateId: string } }
+  request: NextRequest,
+  context: Context
 ) {
   const session = await getServerSession(getAuthOptions());
   
@@ -16,12 +24,11 @@ export async function DELETE(
 
   try {
     await prisma.userDate.delete({
-      where: { id: params.dateId }
+      where: { id: context.params.dateId }
     });
-
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Error:", error);
+  } catch (err) {
+    console.error("Error:", err);
     return NextResponse.json({ error: "Failed to delete date" }, { status: 500 });
   }
 }

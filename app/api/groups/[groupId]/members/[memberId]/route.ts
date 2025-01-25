@@ -19,11 +19,11 @@ export async function DELETE(
       where: { id: params.groupId },
       include: { owner: true }
     });
-
+  
     if (!group || group.owner.email !== session.user.email) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-
+  
     await prisma.groupMembership.delete({
       where: {
         userId_groupId: {
@@ -32,9 +32,9 @@ export async function DELETE(
         }
       }
     });
-
+  
     return NextResponse.json({ success: true });
-  } catch (_error) {
+  } catch {
     return NextResponse.json({ error: "Failed to remove member" }, { status: 500 });
   }
 }

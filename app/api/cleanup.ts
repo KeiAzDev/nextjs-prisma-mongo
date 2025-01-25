@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-
+  
     await prisma.userDate.deleteMany({
       where: {
         date: {
@@ -18,9 +18,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
     });
-
+  
     res.status(200).json({ success: true });
-  } catch (_error) {
+  } catch {
     res.status(500).json({ error: 'Failed to cleanup dates' });
   }
 }
