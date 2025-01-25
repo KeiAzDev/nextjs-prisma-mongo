@@ -1,18 +1,12 @@
 // lib/prisma.ts
 import { PrismaClient } from "@prisma/client";
 
-declare global {
-  namespace NodeJS {
-    interface Global {
-      prisma?: PrismaClient;
-    }
-  }
-}
+const globalForPrisma = global as unknown as {
+  prisma: PrismaClient | undefined
+};
 
-const prisma = ((global as any) as NodeJS.Global).prisma || new PrismaClient();
+const prisma = globalForPrisma.prisma ?? new PrismaClient();
 
-if (process.env.NODE_ENV === "development") {
-  (global as NodeJS.Global).prisma = prisma;
-}
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-export default prisma;
+export default prisma;  // デフォルトエクスポートを追加

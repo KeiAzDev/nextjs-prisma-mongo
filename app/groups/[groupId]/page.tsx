@@ -5,7 +5,6 @@ import { authOptions } from "../../api/auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import NavigationHeader from "@/app/components/NavigationHeader";
-import DateSelectionForm from "@/app/components/DeleteSelectionForm";
 import DeleteGroupButton from "@/app/components/DeleteGroupButton";
 
 export default async function GroupDetailPage({

@@ -22,6 +22,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(user);
   } catch (error) {
+    console.error(error);
     return NextResponse.json(
       { error: "Failed to update dates" },
       { status: 500 }
