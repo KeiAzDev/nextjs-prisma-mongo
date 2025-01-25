@@ -1,65 +1,57 @@
-// app/api/groups/join/route.ts
+// app/api/groups/route.ts
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { getAuthOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { randomBytes } from "crypto";
 
 export async function POST(request: Request) {
-  const session = await getServerSession(getAuthOptions());
-
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
-    const { inviteCode } = await request.json();
+    const session = await getServerSession(getAuthOptions());
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const json = await request.json();
+    if (!json || !json.name) {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
+
+    const { name, description } = json;
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: session.user.email }
     });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const group = await prisma.group.findUnique({
-      where: { inviteCode },
-    });
-
-    if (!group) {
-      return NextResponse.json(
-        { error: "グループが見つかりません" },
-        { status: 404 }
-      );
-    }
-
-    // 既にメンバーかチェック
-    const existingMembership = await prisma.groupMembership.findFirst({
-      where: {
-        userId: user.id,
-        groupId: group.id,
-      },
-    });
-
-    if (existingMembership) {
-      return NextResponse.json(
-        { error: "既にグループのメンバーです" },
-        { status: 400 }
-      );
-    }
-
-    const membership = await prisma.groupMembership.create({
+    const group = await prisma.group.create({
       data: {
-        userId: user.id,
-        groupId: group.id,
+        name,
+        description,
+        inviteCode: randomBytes(3).toString('hex').toUpperCase(),
+        ownerId: user.id,
+        memberships: {
+          create: {
+            userId: user.id
+          }
+        }
       },
+      include: {
+        owner: true,
+        memberships: true
+      }
     });
 
-    return NextResponse.json(membership);
+    return NextResponse.json({ data: group });
   } catch (error) {
-    console.error("Error joining group:", error);
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json(
-      { error: "グループへの参加に失敗しました" },
+      { error: "グループの作成に失敗しました" },
       { status: 500 }
     );
   }
