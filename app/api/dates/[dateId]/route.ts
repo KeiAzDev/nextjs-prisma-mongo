@@ -1,33 +1,41 @@
-import { NextRequest } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { getAuthOptions } from '@/lib/auth';
-import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { getAuthOptions } from "@/lib/auth";
+import prisma from "@/lib/prisma";
+
+type Params = { groupId: string; memberId: string };
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ dateId: string }> } // params を Promise として定義
+  context: { params: Promise<Params> }
 ) {
   try {
-    const { dateId } = await params; // params を await で解決
+    const { groupId, memberId } = await context.params; // 非同期に `params` を取得
 
-    if (!dateId) {
-      return new Response(JSON.stringify({ error: 'Missing dateId' }), { status: 400 });
+    if (!groupId || !memberId) {
+      return NextResponse.json(
+        { error: "Invalid groupId or memberId" },
+        { status: 400 }
+      );
     }
 
     const session = await getServerSession(getAuthOptions());
     if (!session?.user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await prisma.userDate.delete({
+    await prisma.groupMembership.delete({
       where: {
-        id: dateId,
+        userId_groupId: { userId: memberId, groupId: groupId },
       },
     });
 
-    return new Response(JSON.stringify({ success: true }), { status: 200 });
-  } catch (err) {
-    console.error('Error:', err);
-    return new Response(JSON.stringify({ error: 'Failed to delete date entry' }), { status: 500 });
+    return NextResponse.json({ message: "Member removed successfully" });
+  } catch (error) {
+    console.error("DELETE Error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
