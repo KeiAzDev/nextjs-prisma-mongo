@@ -1,103 +1,65 @@
-// app/api/groups/route.ts
+// app/api/groups/join/route.ts
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { getAuthOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
-function generateInviteCode() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
-
-export async function GET() {
-  const session = await getServerSession(getAuthOptions());
-  
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
-    const groups = await prisma.group.findMany({
-      where: {
-        OR: [
-          { ownerId: session.user.id },
-          {
-            memberships: {
-              some: {
-                user: {
-                  email: session.user.email
-                }
-              }
-            }
-          }
-        ]
-      },
-      include: {
-        owner: true,
-        memberships: {
-          include: {
-            user: true
-          }
-        }
-      }
-    });
-
-    return NextResponse.json(groups);
-  } catch (error) {
-    console.error("Error fetching groups:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch groups" },
-      { status: 500 }
-    );
-  }
-}
-
 export async function POST(request: Request) {
   const session = await getServerSession(getAuthOptions());
-  
+
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const { name, description } = await request.json();
+    const { inviteCode } = await request.json();
 
-    // ユーザーを取得
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+      where: { email: session.user.email },
     });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // グループを作成
-    const group = await prisma.group.create({
-      data: {
-        name,
-        description,
-        inviteCode: generateInviteCode(),
-        ownerId: user.id,
-        memberships: {
-          create: {
-            userId: user.id
-          }
-        }
-      },
-      include: {
-        owner: true,
-        memberships: {
-          include: {
-            user: true
-          }
-        }
-      }
+    const group = await prisma.group.findUnique({
+      where: { inviteCode },
     });
 
-    return NextResponse.json(group);
+    if (!group) {
+      return NextResponse.json(
+        { error: "グループが見つかりません" },
+        { status: 404 }
+      );
+    }
+
+    // 既にメンバーかチェック
+    const existingMembership = await prisma.groupMembership.findFirst({
+      where: {
+        userId: user.id,
+        groupId: group.id,
+      },
+    });
+
+    if (existingMembership) {
+      return NextResponse.json(
+        { error: "既にグループのメンバーです" },
+        { status: 400 }
+      );
+    }
+
+    const membership = await prisma.groupMembership.create({
+      data: {
+        userId: user.id,
+        groupId: group.id,
+      },
+    });
+
+    return NextResponse.json(membership);
   } catch (error) {
-    console.error("Error creating group:", error);
+    console.error("Error joining group:", error);
     return NextResponse.json(
-      { error: "Failed to create group" },
+      { error: "グループへの参加に失敗しました" },
       { status: 500 }
     );
   }
