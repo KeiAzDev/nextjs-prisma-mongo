@@ -6,6 +6,7 @@ import prisma from "@/lib/prisma";
 import Link from "next/link";
 import NavigationHeader from "@/app/components/NavigationHeader";
 import DeleteGroupButton from "@/app/components/DeleteGroupButton";
+import RemoveMemberButton from "@/app/components/RemoveMemberButton";
 
 type PageProps = {
   params: Promise<{ groupId: string }>;
@@ -76,19 +77,19 @@ export default async function GroupDetailPage(props: PageProps) {
           <div className="border-t pt-6">
             <h2 className="text-lg font-semibold mb-4">メンバー一覧</h2>
             <div className="grid gap-2">
-              {group.memberships.map((membership) => (
-                <div
-                  key={membership.user.id}
-                  className="flex items-center justify-between py-2"
-                >
-                  <div className="flex items-center gap-2">
-                    <span>{membership.user.name}</span>
-                    {membership.user.id === group.owner.id && (
-                      <span className="text-sm text-gray-500">(作成者)</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+            {group.memberships.map((membership) => (
+  <div key={membership.user.id} className="flex items-center justify-between py-2">
+    <div className="flex items-center gap-2">
+      <span>{membership.user.name}</span>
+      {membership.user.id === group.owner.id && (
+        <span className="text-sm text-gray-500">(作成者)</span>
+      )}
+    </div>
+    {isOwner && membership.user.id !== group.owner.id && (
+  <RemoveMemberButton groupId={group.id} memberId={membership.user.id} />
+)}
+  </div>
+))}
             </div>
           </div>
 

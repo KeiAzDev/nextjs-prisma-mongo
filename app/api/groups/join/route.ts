@@ -1,3 +1,4 @@
+// app/api/groups/join/route.ts
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { getAuthOptions } from "@/lib/auth";
@@ -46,6 +47,12 @@ export async function POST(request: Request) {
       );
     }
 
+    // 既存の希望日を削除
+    await prisma.userDate.deleteMany({
+      where: { userId: user.id },
+    });
+
+    // グループメンバーシップを作成
     const membership = await prisma.groupMembership.create({
       data: {
         userId: user.id,

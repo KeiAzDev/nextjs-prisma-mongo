@@ -14,32 +14,32 @@ export async function POST(request: Request) {
   try {
     const { selections, email } = await request.json();
 
-    await prisma.$transaction(async (prisma) => {
-      const user = await prisma.user.findUnique({
-        where: { email },
-      });
-
-      if (!user) {
-        throw new Error("User not found");
-      }
-
-      await prisma.userDate.deleteMany({
-        where: { userId: user.id },
-      });
-
-      // 修正したcreateMany
-      await prisma.userDate.createMany({
-        data: selections.map((selection: { date: string; memo: string }) => ({
-          date: new Date(selection.date),
-          memo: selection.memo,
-          userId: user.id,
-        })),
-      });
+    const user = await prisma.user.findUnique({
+      where: { email },
     });
 
-    return NextResponse.json({ success: true });
+    if (!user) throw new Error("User not found");
+
+    await prisma.userDate.createMany({
+      data: selections.map((selection: { date: string; memo: string }) => ({
+        date: new Date(selection.date),  // タイムゾーン調整を削除
+        memo: selection.memo,
+        userId: user.id
+      }))
+    });
+
+    // 最新の日付一覧を取得して返す
+    const updatedUser = await prisma.user.findUnique({
+      where: { email },
+      include: { dates: true },
+    });
+
+    return NextResponse.json({
+      success: true,
+      dates: updatedUser?.dates,
+    });
   } catch (error) {
-    console.error("Error:", error);
+    console.error(error);
     return NextResponse.json(
       { error: "Failed to update dates" },
       { status: 500 }
