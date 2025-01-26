@@ -20,7 +20,7 @@ export default async function SelectDates() {
   if (!user) redirect("/");
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-16">
       <NavigationHeader userName={user.name || "名無しさん"} />
       <main className="max-w-4xl mx-auto p-8">
         <div className="bg-white rounded-lg shadow p-6">

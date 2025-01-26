@@ -54,7 +54,7 @@ export default async function GroupsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-16">
       <NavigationHeader userName={session.user.name || "名無しさん"} />
       
       <main className="max-w-4xl mx-auto p-8">
