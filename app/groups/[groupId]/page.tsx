@@ -8,6 +8,17 @@ import NavigationHeader from "@/app/components/NavigationHeader";
 import DeleteGroupButton from "@/app/components/DeleteGroupButton";
 import RemoveMemberButton from "@/app/components/RemoveMemberButton";
 
+// Add this function to format dates consistently
+const formatJapanDate = (date: string | Date) => {
+  return new Date(date).toLocaleString("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+  });
+};
+
 type PageProps = {
   params: Promise<{ groupId: string }>;
 };
@@ -116,15 +127,7 @@ export default async function GroupDetailPage(props: PageProps) {
                               className="bg-white p-2 rounded border flex justify-between"
                             >
                               <span>
-                                {new Date(date.date).toLocaleDateString(
-                                  "ja-JP",
-                                  {
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                    weekday: "long",
-                                  }
-                                )}
+                                {formatJapanDate(date.date)}
                               </span>
                               <span className="text-gray-600">{date.memo}</span>
                             </div>

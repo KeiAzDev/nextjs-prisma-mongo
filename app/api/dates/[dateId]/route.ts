@@ -5,34 +5,20 @@ import prisma from "@/lib/prisma";
 
 export async function DELETE(request: NextRequest) {
   try {
-    const segments = request.nextUrl.pathname.split("/");
-    const groupId = segments[3];
-    const memberId = segments[5];
-
-    if (!groupId || !memberId) {
-      return NextResponse.json(
-        { error: "Invalid parameters" },
-        { status: 400 }
-      );
-    }
-
+    const dateId = request.nextUrl.pathname.split("/")[3];
+    
     const session = await getServerSession(getAuthOptions());
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await prisma.groupMembership.delete({
-      where: {
-        userId_groupId: { userId: memberId, groupId: groupId },
-      },
+    await prisma.userDate.delete({
+      where: { id: dateId }
     });
 
-    return NextResponse.json({ message: "Member removed successfully" });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("DELETE Error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error("Delete Error:", error);
+    return NextResponse.json({ error: "Failed to delete date" }, { status: 500 });
   }
 }
